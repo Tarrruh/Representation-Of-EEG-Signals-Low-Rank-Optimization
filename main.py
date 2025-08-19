@@ -30,21 +30,6 @@ def project_affine_measurement(Z: np.ndarray, Phi: np.ndarray, Y: np.ndarray) ->
     X_proj = Z - correction
     return X_proj
 
-
-def compute_metrics(X_true: np.ndarray, X_rec: np.ndarray) -> dict:
-
-    Xt = X_true / (la.norm(X_true, ord='fro') + 1e-12)
-    Xr = X_rec / (la.norm(X_rec, ord='fro') + 1e-12)
-
-    mse = la.norm(Xr - Xt, ord='fro')**2 / X_true.size
-
-    num = np.vdot(X_true.ravel(), X_rec.ravel()).real
-    den = (la.norm(X_true, ord='fro') * la.norm(X_rec, ord='fro') + 1e-12)
-    mcc = num / den
-
-    return {"MSE": float(mse), "MCC": float(mcc)}
-
-
 def sclr_cvxpy(Phi: np.ndarray, Y: np.ndarray, Omega: sp.csr_matrix,
                alpha: float = 1.0, beta: float = 1.0, verbose: bool = True) -> np.ndarray:
 
@@ -128,17 +113,6 @@ def main():
     X_rec = sclr_cvxpy(Phi, Y, Omega, alpha=args.alpha, beta=args.beta, verbose=False)
 
     X_rec = project_affine_measurement(X_rec, Phi, Y)
-
-    metrics = compute_metrics(X_true_norm, X_rec)
-    print("Reconstruction metrics:")
-    print(json.dumps(metrics, indent=2))
-
-    np.save(out_dir / "X_true.npy", X_true_norm)
-    np.save(out_dir / "X_rec.npy", X_rec)
-    np.save(out_dir / "Phi.npy", Phi)
-    np.save(out_dir / "Y.npy", Y)
-    with open(out_dir / "metrics.json", "w") as f:
-        json.dump(metrics, f, indent=2)
 
     if args.plot:
         t = np.arange(N) / sfreq
