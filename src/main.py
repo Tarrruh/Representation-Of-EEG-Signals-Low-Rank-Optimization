@@ -42,13 +42,14 @@ def sclr_cvxpy(Phi: np.ndarray, Y: np.ndarray, Omega: sp.csr_matrix,
     constraints = [Phi @ X == Y]
     prob = cp.Problem(cp.Minimize(obj), constraints)
 
-    try_solvers = ["MOSEK"] #"SCS", "OSQP", "ECOS"]
+    try_solvers = ["SCS"]  # "MOSEK", "OSQP", "ECOS"
     last_status = None
     for s in try_solvers:
         try:
-            prob.solve(solver=s, verbose=verbose, mosek_params={"MSK_IPAR_INTPNT_MAX_ITERATIONS": 20000})
+            prob.solve(solver=s, verbose=verbose, max_iters=20000)
             last_status = prob.status
             if X.value is not None and last_status in ["optimal", "optimal_inaccurate"]:
+                print(s)
                 break
         except Exception as e:
             last_status = f"failed_with_{s}: {e}"
@@ -122,7 +123,7 @@ def main():
             plt.plot(t, X_rec[:, ch], label="Reconstructed")
             plt.xlabel("Time (s)")
             plt.ylabel("Amplitude (a.u.)")
-            plt.title(f"Channel {existing[ch]} in MOSEK")
+            plt.title(f"Channel {existing[ch]}")
             plt.legend()
             plt.tight_layout()
             plt.savefig(out_dir / f"waveform_ch{ch}.png")
